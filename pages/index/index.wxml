@@ -1,0 +1,9 @@
+<!--index.wxml-->
+<view class="container">
+  <canvas disable-scroll="{{true}}" class='canvas' canvas-id='decorate' bindtouchstart='touchStart' bindtouchmove='touchMove' bindtouchend='touchEnd'></canvas>
+  <view class='bottom'>
+    <view wx:for="{{data}}" wx:item="item" data-item="{{item}}" bindtap="addImg">
+      添加
+    </view>
+  </view>
+</view>

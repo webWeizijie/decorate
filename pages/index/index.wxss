@@ -1,0 +1,29 @@
+.container{
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 750rpx;
+}
+.bottom{
+  position: fixed;
+  bottom: 0;
+  height: 200rpx;
+  width: 750rpx;
+  text-align: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+.bottom view{
+  margin: 20rpx;
+}
+.canvas{
+  position: fixed;
+  width: 750rpx;
+  left: 0;
+  top: 0;
+  bottom: 200rpx;
+  background: #f2f3f4;
+  height: auto;
+}
