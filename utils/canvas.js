@@ -1,13 +1,61 @@
-const BTNSIZE = 20
+const BTNSIZE = 17
 class Canvas {
-  constructor(id) {
+  constructor(id, bg) {
+    this.id = id
     this.list = []
     this.ctx = wx.createCanvasContext(id)
     this.selectedItem = null
     this.touchItem = false
-  }
-  init() {
+    this.bg = bg
+    this.initbg()
+    this.ctx.draw()
 
+  }
+  initbg() {
+    const {
+      url,
+      width,
+      height,
+      x,
+      y
+    } = this.bg
+    this.ctx.beginPath()
+    this.ctx.drawImage(url, x, y, width, height)
+    this.ctx.closePath()
+  }
+  cancelSelected() {
+    this.initbg()
+    this.list.forEach((item, idx) => {
+      item.draw(this.ctx, false)
+    })
+    this.ctx.draw(false)
+  }
+  saveCanvas() {
+    this.cancelSelected()
+    return new Promise((reslove, reject) => {
+      wx.canvasToTempFilePath({
+        x: 0,
+        y: 0,
+        destWidth: 600,
+        destHeight: 600,
+        canvasId: this.id,
+        quality: 1,
+        success(res) {
+          wx.saveImageToPhotosAlbum({
+            filePath: res.tempFilePath,
+            success(e) {
+              reslove()
+            },
+            fail() {
+              reject()
+            }
+          })
+        },
+        fail() {
+          reject()
+        }
+      })
+    })
   }
   addList(item) {
     this.list.push(item)
@@ -38,24 +86,25 @@ class Canvas {
   isClickClose(item, x, y) {
     let btnx = item.touch.clsx
     let btny = item.touch.clsy
-    let sx = btnx
-    let ex = btnx + BTNSIZE
-    let sy = btny
-    let ey = btny + BTNSIZE
+    let sx = btnx - BTNSIZE / 3
+    let ex = btnx + BTNSIZE + BTNSIZE / 3
+    let sy = btny - BTNSIZE / 3
+    let ey = btny + BTNSIZE + BTNSIZE / 3
     console.log(sx, sy, ex, ey, BTNSIZE)
     return x > sx && x < ex && y > sy && y < ey
   }
   draw() {
+    this.initbg()
     this.list.forEach((item, idx) => {
-      let clear = idx == 0 ? false : true
       let selected = false
 
       if (idx == this.list.length - 1) {
         this.selectedItem = item
         selected = true
       }
-      item.draw(this.ctx, clear, selected)
+      item.draw(this.ctx, selected)
     })
+    this.ctx.draw(false)
   }
   touchStart(x, y) {
     if (this.list.length == 0) return
@@ -66,39 +115,45 @@ class Canvas {
     console.log(isFalse, '是否点中了元素')
     if (isFalse) {
       let deletIdx = null
-      this.ctx.draw()
+      this.initbg()
       this.list.forEach((item, idx) => {
         let selected = false
+        //如果点击了关闭
         if (!this.isClickClose(item, x, y)) {
           if (idx == selectItem.idx) {
             selected = true
             item.touchStart(x, y)
             this.selectedItem = item
           }
-          item.draw(this.ctx, true, selected)
+          item.draw(this.ctx, selected)
         } else {
           deletIdx = idx
         }
       })
+      this.ctx.draw(false)
+
+      //如果是删除逻辑
       if (deletIdx != null) {
         this.list.splice(deletIdx, 1)
         this.draw()
       }
     } else {
+      this.cancelSelected()
       this.selectedItem == null
     }
   }
   touchScale(x, y) {
     if (this.selectedItem == null || !this.touchItem || this.list.length == 0) return
 
+    this.initbg()
     this.selectedItem.change(x, y)
     this.list.forEach((item, idx) => {
-      let clear = idx == 0 ? false : true
       let selected = false
       if (this.selectedItem == item) selected = true
 
-      item.draw(this.ctx, clear, selected)
+      item.draw(this.ctx, selected)
     })
+    this.ctx.draw(false)
   }
   touchEnd() {
     if (this.selectedItem == null || this.list.length == 0) return
@@ -142,7 +197,7 @@ class CanvasItem {
     this.routeline = 0
     this.isTouchBtn = false
   }
-  draw(ctx, clear = true, selected = false) {
+  draw(ctx, selected = false) {
     let countWid = this.width + this.scalenum * 2
     let countHei = this.height + this.scalenum * 2
     let x = this.x - this.scalenum
@@ -158,16 +213,17 @@ class CanvasItem {
     if (selected) this.selected(ctx, x, y, countWid, countHei)
     ctx.drawImage(this.url, x, y, countWid, countHei)
     ctx.restore()
-    ctx.draw(clear)
     ctx.closePath()
   }
   selected(ctx, x, y, countWid, countHei) {
-    ctx.setStrokeStyle('red')
+    ctx.setStrokeStyle('#ffd3d6')
     ctx.setLineWidth(2)
     ctx.setLineDash([10, 10], 12);
     ctx.strokeRect(x, y, countWid, countHei)
-    ctx.arc(x + countWid, y + countHei, BTNSIZE / 2, 0, 2 * Math.PI)
-    ctx.arc(x, y, BTNSIZE / 2, 0, 2 * Math.PI)
+    ctx.drawImage('/images/change.png', x + countWid - BTNSIZE / 2, y + countHei - BTNSIZE / 2, BTNSIZE, BTNSIZE)
+    ctx.drawImage('/images/cls.png', x - BTNSIZE / 2, y - BTNSIZE / 2, BTNSIZE, BTNSIZE)
+    //ctx.arc(x + countWid, y + countHei, BTNSIZE / 2, 0, 2 * Math.PI)
+    //ctx.arc(x, y, BTNSIZE / 2, 0, 2 * Math.PI)
     ctx.fill()
   }
   touchStart(x, y) {

@@ -4,6 +4,8 @@ App({
 
   },
   globalData: {
-    userInfo: null
+    userInfo: null,
+    cacheUrl:null,
+    avatar:null
   }
 })

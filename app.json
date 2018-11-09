@@ -1,6 +1,9 @@
 {
   "pages":[
-    "pages/index/index"
+   
+    "pages/index/index",
+    "pages/cutInside/cutInside"
+    
   ],
   "window":{
     "backgroundTextStyle":"light",
